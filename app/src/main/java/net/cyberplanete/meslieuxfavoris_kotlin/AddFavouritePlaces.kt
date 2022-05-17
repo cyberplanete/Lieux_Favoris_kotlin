@@ -10,5 +10,14 @@ class AddFavouritePlaces : AppCompatActivity() {private var binding: ActivityAdd
         binding = ActivityAddFavouritePlacesBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
         setContentView(binding?.root)
+
+        /* Pour la bar d'action */
+        setSupportActionBar(binding?.toolbarAddPlace)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        // Le titre est ajouté depuis androidManifest.xml
+        binding?.toolbarAddPlace?.setNavigationOnClickListener {
+            onBackPressed()
+        }
+        /* END --- Pour la bar d'action */
     }
 }

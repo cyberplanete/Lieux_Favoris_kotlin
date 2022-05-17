@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Mes lieux Favoris - Kotlin</string>
+    <string name="text_add_image">Ajouter une photo</string>
 </resources>

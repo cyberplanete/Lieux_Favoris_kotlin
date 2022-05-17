@@ -3,8 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable/edit_border.xml" value="0.1915" />
         <entry key="app/src/main/res/drawable/ic_action_add_24dp.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/activity_add_favourite_places.xml" value="0.359375" />
+        <entry key="app/src/main/res/layout/activity_add_favourite_places.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.359375" />
       </map>
     </option>
