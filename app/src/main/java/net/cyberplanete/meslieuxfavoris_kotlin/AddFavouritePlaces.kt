@@ -67,7 +67,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener {
             }
         }
     }
-
+/* Methode pour afficher la date dans l'inputtext après l'avoir séléctionner dans le datePicker */
     private fun updateDateInView() {
         val dateFormat = "dd.MM.yyyy"
         val simpleDateFormat = SimpleDateFormat(dateFormat, Locale.getDefault())
