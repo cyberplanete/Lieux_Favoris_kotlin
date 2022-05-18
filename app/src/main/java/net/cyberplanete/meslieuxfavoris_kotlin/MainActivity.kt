@@ -1,10 +1,12 @@
 package net.cyberplanete.meslieuxfavoris_kotlin
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityAddFavouritePlacesBinding
+import androidx.appcompat.app.AppCompatActivity
 import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityMainBinding
+
+
+
 
 class MainActivity : AppCompatActivity() {
     private var binding: ActivityMainBinding? = null
