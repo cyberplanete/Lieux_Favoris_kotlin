@@ -7,11 +7,21 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import com.vmadalin.easypermissions.EasyPermissions
+import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityAddFavouritePlacesBinding
 import java.text.SimpleDateFormat
 import java.util.*
 
-class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener {
+class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
+    EasyPermissions.PermissionCallbacks {
+
+    companion object {
+        const val PERMISSION_READ_WRITE_EXTERNAL_REQUEST_CODE = 1
+        const val PERMISSION_CAMERA_REQUEST_CODE = 2
+    }
+
+
     /* DatePicker */
     private var calendar = Calendar.getInstance() // Instance de Calendar java
     private lateinit var dateListener: DatePickerDialog.OnDateSetListener // Pour l'UI
@@ -78,8 +88,8 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener {
                     arrayOf("Selectionner une photo depuis la gallerie", "Prendre une photo")
                 imageDialog.setItems(imageDialogItems) { dialog, whichOne ->
                     when (whichOne) {
-                        0 -> choisirUnePhotoDepuisGallerie()
-                        1 -> Toast.makeText(this@AddFavouritePlaces, "Cam", Toast.LENGTH_LONG)
+                        0 -> requestReadWriteExternalStoragePermission()
+                        1 -> requestCameraPermission()
                     }
 
 
@@ -99,4 +109,65 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener {
         binding?.etDate?.setText(simpleDateFormat.format(calendar.time).toString())
 
     }
+
+    private fun hasReadWriteStoragePermission(): Boolean {
+        return EasyPermissions.hasPermissions(
+            this,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+    }
+
+    private fun requestReadWriteExternalStoragePermission() {
+        EasyPermissions.requestPermissions(
+            this,
+            "Cette application à besoin d'accéder à vos fichiers et dossiers pour permettre la sélection d'une image ",
+            PERMISSION_READ_WRITE_EXTERNAL_REQUEST_CODE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+
+            )
+    }
+
+    private fun hasCameraPermission(): Boolean {
+        return EasyPermissions.hasPermissions(
+            this,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        )
+    }
+
+    private fun requestCameraPermission() {
+        EasyPermissions.requestPermissions(
+            this,
+            "Cette application à besoin d'accéder à votre camera pour prendre des photos  ",
+            PERMISSION_CAMERA_REQUEST_CODE,
+            Manifest.permission.CAMERA,
+
+            )
+    }
+
+
+    override fun onPermissionsDenied(requestCode: Int, perms: List<String>) {
+        if (EasyPermissions.somePermissionPermanentlyDenied(this,perms))
+        {
+            SettingsDialog.Builder(this).build().show()
+        }else
+        {
+            if (requestCode == PERMISSION_READ_WRITE_EXTERNAL_REQUEST_CODE)
+            {
+                requestReadWriteExternalStoragePermission()
+            }
+            else if (requestCode == PERMISSION_CAMERA_REQUEST_CODE)
+            {
+                requestCameraPermission()
+            }
+        }
+    }
+
+    override fun onPermissionsGranted(requestCode: Int, perms: List<String>) {
+        Toast.makeText(this,"Permissions autorisées",Toast.LENGTH_LONG).show()
+    }
+
+
 }
