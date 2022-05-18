@@ -3,8 +3,12 @@ package net.cyberplanete.meslieuxfavoris_kotlin
 import android.Manifest
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.Intent
+import android.content.res.Resources
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.Toast
 import com.vmadalin.easypermissions.EasyPermissions
@@ -151,7 +155,21 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     override fun onPermissionsDenied(requestCode: Int, perms: List<String>) {
         if (EasyPermissions.somePermissionPermanentlyDenied(this,perms))
         {
-            SettingsDialog.Builder(this).build().show()
+          ///  SettingsDialog.Builder(this).build().show()
+            AlertDialog.Builder(this).setMessage("Permission refusée......").setPositiveButton("GO TO SETTINGS")
+            { _,_ ->
+                try {
+                    // Renvoyer l'utilisateur vers les parametres de l'application pour permettre à l'utilisateur d'appliquer les droits manuellements
+                    // override fun onRequestPermissionsResult which Handle the result of a permission request géré dans les if statements
+                    val intent  =  Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                    val uriPackageName = Uri.fromParts("package",packageName,null)
+                    intent.data = uriPackageName
+                    startActivity(intent)
+                }catch (e:Resources.NotFoundException) {e.printStackTrace()}
+
+            }.setNegativeButton("Annuler") {dialog,which ->
+              dialog.dismiss()
+            }.show()
         }else
         {
             if (requestCode == PERMISSION_READ_WRITE_EXTERNAL_REQUEST_CODE)
@@ -170,4 +188,12 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     }
 
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        EasyPermissions.onRequestPermissionsResult(requestCode,permissions,grantResults,this)//Handle the result of a permission request
+    }
 }
