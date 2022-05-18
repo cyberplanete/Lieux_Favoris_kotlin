@@ -1,4 +1,4 @@
-# Lieux_Favoris_kotlin
+# Lieux Favoris kotlin
 Programme sous kotlin permettant de gérer une liste de lieux favoris
 
 
