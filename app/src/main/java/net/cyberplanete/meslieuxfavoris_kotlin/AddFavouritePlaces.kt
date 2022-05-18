@@ -153,38 +153,37 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
 
 
     override fun onPermissionsDenied(requestCode: Int, perms: List<String>) {
-        if (EasyPermissions.somePermissionPermanentlyDenied(this,perms))
-        {
-          ///  SettingsDialog.Builder(this).build().show()
-            AlertDialog.Builder(this).setMessage("Permission refusée......").setPositiveButton("GO TO SETTINGS")
-            { _,_ ->
-                try {
-                    // Renvoyer l'utilisateur vers les parametres de l'application pour permettre à l'utilisateur d'appliquer les droits manuellements
-                    // override fun onRequestPermissionsResult which Handle the result of a permission request géré dans les if statements
-                    val intent  =  Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                    val uriPackageName = Uri.fromParts("package",packageName,null)
-                    intent.data = uriPackageName
-                    startActivity(intent)
-                }catch (e:Resources.NotFoundException) {e.printStackTrace()}
+        if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
+            ///  SettingsDialog.Builder(this).build().show()
+            AlertDialog.Builder(this)
+                .setMessage("il semble que vous ayez désactivé l'autorisation requise pour cette fonctionnalité. Cette autorisation peut être activée dans les paramètres de l'application")
+                .setPositiveButton("GO TO SETTINGS")
+                { _, _ ->
+                    try {
+                        // Renvoyer l'utilisateur vers les parametres de l'application pour permettre à l'utilisateur d'appliquer les droits manuellements
+                        // override fun onRequestPermissionsResult which Handle the result of a permission request géré dans les if statements
+                        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        val uriPackageName = Uri.fromParts("package", packageName, null)
+                        intent.data = uriPackageName
+                        startActivity(intent)
+                    } catch (e: Resources.NotFoundException) {
+                        e.printStackTrace()
+                    }
 
-            }.setNegativeButton("Annuler") {dialog,which ->
-              dialog.dismiss()
+                }.setNegativeButton("Annuler") { dialog, which ->
+                dialog.dismiss()
             }.show()
-        }else
-        {
-            if (requestCode == PERMISSION_READ_WRITE_EXTERNAL_REQUEST_CODE)
-            {
+        } else {
+            if (requestCode == PERMISSION_READ_WRITE_EXTERNAL_REQUEST_CODE) {
                 requestReadWriteExternalStoragePermission()
-            }
-            else if (requestCode == PERMISSION_CAMERA_REQUEST_CODE)
-            {
+            } else if (requestCode == PERMISSION_CAMERA_REQUEST_CODE) {
                 requestCameraPermission()
             }
         }
     }
 
     override fun onPermissionsGranted(requestCode: Int, perms: List<String>) {
-        Toast.makeText(this,"Permissions autorisées",Toast.LENGTH_LONG).show()
+        Toast.makeText(this, "Permissions autorisées", Toast.LENGTH_LONG).show()
     }
 
 
@@ -194,6 +193,11 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        EasyPermissions.onRequestPermissionsResult(requestCode,permissions,grantResults,this)//Handle the result of a permission request
+        EasyPermissions.onRequestPermissionsResult(
+            requestCode,
+            permissions,
+            grantResults,
+            this
+        )//Handle the result of a permission request
     }
 }
