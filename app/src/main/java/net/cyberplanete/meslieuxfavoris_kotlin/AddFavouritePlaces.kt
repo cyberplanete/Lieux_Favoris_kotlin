@@ -1,13 +1,15 @@
 package net.cyberplanete.meslieuxfavoris_kotlin
 
+import android.Manifest
+import android.app.AlertDialog
 import android.app.DatePickerDialog
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityAddFavouritePlacesBinding
 import java.text.SimpleDateFormat
 import java.util.*
-
 
 class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener {
     /* DatePicker */
@@ -49,10 +51,14 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener {
             updateDateInView()
         }
         binding?.etDate?.setOnClickListener(this)
+        /* DatePicker - END */
 
+        /* Add Image */
+        binding?.tvAddPhoto?.setOnClickListener(this)
 
     }
-/* Centralisation logique onClickListenner*/
+
+    /* Centralisation logique onClickListenner*/
     override fun onClick(elementOfView: View?) {
         when (elementOfView!!.id) //
         {
@@ -65,9 +71,28 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener {
                     calendar.get(Calendar.DAY_OF_MONTH)
                 ).show()
             }
+            R.id.tv_add_photo -> {
+                val imageDialog = AlertDialog.Builder(this)
+                imageDialog.setTitle("Selectionner une action")
+                val imageDialogItems =
+                    arrayOf("Selectionner une photo depuis la gallerie", "Prendre une photo")
+                imageDialog.setItems(imageDialogItems) { dialog, whichOne ->
+                    when (whichOne) {
+                        0 -> choisirUnePhotoDepuisGallerie()
+                        1 -> Toast.makeText(this@AddFavouritePlaces, "Cam", Toast.LENGTH_LONG)
+                    }
+
+
+                }.show()
+            }
         }
     }
-/* Methode pour afficher la date dans l'inputtext après l'avoir séléctionner dans le datePicker */
+
+    fun choisirUnePhotoDepuisGallerie() {
+        TODO("Not yet implemented")
+    }
+
+    /* Methode pour afficher la date dans l'inputtext après l'avoir séléctionner dans le datePicker */
     private fun updateDateInView() {
         val dateFormat = "dd.MM.yyyy"
         val simpleDateFormat = SimpleDateFormat(dateFormat, Locale.getDefault())
