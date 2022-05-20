@@ -16,7 +16,7 @@
         <activity
             android:name=".AddFavouritePlaces"
             android:exported="false"
-            android:label="Ajouter un lieux favoris"
+            android:label="Ajouter un lieu favoris"
             android:screenOrientation="portrait"
             android:theme="@style/CustomNoActionBarTheme"/>
         <activity

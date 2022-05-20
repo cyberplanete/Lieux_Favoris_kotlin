@@ -8,11 +8,14 @@ import android.content.res.Resources
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.provider.Settings
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import com.vmadalin.easypermissions.EasyPermissions
-import com.vmadalin.easypermissions.dialogs.SettingsDialog
 import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityAddFavouritePlacesBinding
 import java.text.SimpleDateFormat
 import java.util.*
@@ -21,12 +24,47 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     EasyPermissions.PermissionCallbacks {
 
     companion object {
-        const val PERMISSION_READ_WRITE_EXTERNAL_REQUEST_CODE = 1
-        const val PERMISSION_CAMERA_REQUEST_CODE = 2
+        const val GALLERY_REQUEST_CODE = 1
+        const val CAMERA_REQUEST_CODE = 2
+      //  const val GALLERY = 3
     }
 
 
-    /* DatePicker */
+
+
+    /* Centralisation logique onClickListenner*/
+    override fun onClick(elementOfView: View?) {
+        when (elementOfView!!.id) //
+        {
+            R.id.et_date -> {
+                DatePickerDialog(
+                    this@AddFavouritePlaces,
+                    dateListener,
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                ).show()
+            }
+            R.id.tv_add_photo -> {
+                val imageDialog = AlertDialog.Builder(this)
+                imageDialog.setTitle("Selectionner une action")
+                val imageDialogItems =
+                    arrayOf("Selectionner une photo depuis la gallerie", "Prendre une photo")
+                imageDialog.setItems(imageDialogItems) { dialog, whichOne ->
+                    when (whichOne) {
+                        0 -> requestReadWriteExternalStoragePermission()
+                        1 -> requestCameraPermission()
+                    }
+
+
+                }.show()
+            }
+        }
+    }
+    /* Centralisation logique onClickListenner  - END */
+
+
+    /* ---------------------- DatePicker ------------------------*/
     private var calendar = Calendar.getInstance() // Instance de Calendar java
     private lateinit var dateListener: DatePickerDialog.OnDateSetListener // Pour l'UI
 
@@ -72,45 +110,42 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
 
     }
 
-    /* Centralisation logique onClickListenner*/
-    override fun onClick(elementOfView: View?) {
-        when (elementOfView!!.id) //
-        {
-            R.id.et_date -> {
-                DatePickerDialog(
-                    this@AddFavouritePlaces,
-                    dateListener,
-                    calendar.get(Calendar.YEAR),
-                    calendar.get(Calendar.MONTH),
-                    calendar.get(Calendar.DAY_OF_MONTH)
-                ).show()
-            }
-            R.id.tv_add_photo -> {
-                val imageDialog = AlertDialog.Builder(this)
-                imageDialog.setTitle("Selectionner une action")
-                val imageDialogItems =
-                    arrayOf("Selectionner une photo depuis la gallerie", "Prendre une photo")
-                imageDialog.setItems(imageDialogItems) { dialog, whichOne ->
-                    when (whichOne) {
-                        0 -> requestReadWriteExternalStoragePermission()
-                        1 -> requestCameraPermission()
-                    }
-
-
-                }.show()
-            }
-        }
-    }
-
-    fun choisirUnePhotoDepuisGallerie() {
-        TODO("Not yet implemented")
-    }
-
     /* Methode pour afficher la date dans l'inputtext après l'avoir séléctionner dans le datePicker */
     private fun updateDateInView() {
         val dateFormat = "dd.MM.yyyy"
         val simpleDateFormat = SimpleDateFormat(dateFormat, Locale.getDefault())
         binding?.etDate?.setText(simpleDateFormat.format(calendar.time).toString())
+
+    }
+    /* ---------------------- DatePicker END ------------------------*/
+
+
+
+
+
+
+    /* - Request read and write storage permissions -
+   Check permissions pour l'accès aux dossiers et fichiers
+       si nok , alors demande des droits d'accès
+       sinon ouverture du gestionnaire de fichiers pour selectionner une image */
+
+    private fun requestReadWriteExternalStoragePermission() {
+
+        if (hasReadWriteStoragePermission()) {
+               val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+               startActivityForResultGallery.launch(galleryIntent)
+
+        } else {
+            EasyPermissions.requestPermissions(
+                this,
+                "Cette application à besoin d'accéder à vos fichiers et dossiers pour permettre la sélection d'une image ",
+                GALLERY_REQUEST_CODE,
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+
+                )
+
+        }
 
     }
 
@@ -121,16 +156,42 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
     }
+    /* ActivityResult  for   private fun requestReadWriteExternalStoragePermission() et  private fun requestCameraPermission() */
+    private val startActivityForResultGallery = registerForActivityResult(ActivityResultContracts.StartActivityForResult(),
+        ActivityResultCallback <ActivityResult>{
+            if (it.resultCode == RESULT_OK) //Si
+            {
+                if (it.data != null) // Si il y a une image
+                {
+                    val contentURI = it.data!!.data
+                    val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver,contentURI)
+                    binding?.ivImage?.setImageBitmap(selectedImageBitmap)
+                }
+            }
+        })
 
-    private fun requestReadWriteExternalStoragePermission() {
-        EasyPermissions.requestPermissions(
-            this,
-            "Cette application à besoin d'accéder à vos fichiers et dossiers pour permettre la sélection d'une image ",
-            PERMISSION_READ_WRITE_EXTERNAL_REQUEST_CODE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
 
-            )
+
+/* ---------------------- Request read and write storage permissions - END --------------------------------------- */
+
+
+    /* - Request camera permissions -
+   Check permissions pour l'accès à la camera -
+       si nok , alors demande des droits d'accès */
+    private fun requestCameraPermission() {
+
+        if (hasCameraPermission()) {
+            //TODO ouvrir l'appareil photo
+
+        } else {
+            EasyPermissions.requestPermissions(
+                this,
+                "Cette application à besoin d'accéder à votre camera pour prendre des photos  ",
+                CAMERA_REQUEST_CODE,
+                Manifest.permission.CAMERA,
+
+                )
+        }
     }
 
     private fun hasCameraPermission(): Boolean {
@@ -140,17 +201,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
     }
-
-    private fun requestCameraPermission() {
-        EasyPermissions.requestPermissions(
-            this,
-            "Cette application à besoin d'accéder à votre camera pour prendre des photos  ",
-            PERMISSION_CAMERA_REQUEST_CODE,
-            Manifest.permission.CAMERA,
-
-            )
-    }
-
+    /* - Request camera permissions - END */
 
     override fun onPermissionsDenied(requestCode: Int, perms: List<String>) {
         if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
@@ -171,12 +222,12 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
                     }
 
                 }.setNegativeButton("Annuler") { dialog, which ->
-                dialog.dismiss()
-            }.show()
+                    dialog.dismiss()
+                }.show()
         } else {
-            if (requestCode == PERMISSION_READ_WRITE_EXTERNAL_REQUEST_CODE) {
+            if (requestCode == GALLERY_REQUEST_CODE) {
                 requestReadWriteExternalStoragePermission()
-            } else if (requestCode == PERMISSION_CAMERA_REQUEST_CODE) {
+            } else if (requestCode == CAMERA_REQUEST_CODE) {
                 requestCameraPermission()
             }
         }
@@ -184,6 +235,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
 
     override fun onPermissionsGranted(requestCode: Int, perms: List<String>) {
         Toast.makeText(this, "Permissions autorisées", Toast.LENGTH_LONG).show()
+
     }
 
 
