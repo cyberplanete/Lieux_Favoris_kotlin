@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.content.res.Resources
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -17,6 +18,7 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import com.vmadalin.easypermissions.EasyPermissions
 import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityAddFavouritePlacesBinding
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -26,10 +28,8 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     companion object {
         const val GALLERY_REQUEST_CODE = 1
         const val CAMERA_REQUEST_CODE = 2
-      //  const val GALLERY = 3
+        //  const val GALLERY = 3
     }
-
-
 
 
     /* Centralisation logique onClickListenner*/
@@ -120,10 +120,6 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     /* ---------------------- DatePicker END ------------------------*/
 
 
-
-
-
-
     /* - Request read and write storage permissions -
    Check permissions pour l'accès aux dossiers et fichiers
        si nok , alors demande des droits d'accès
@@ -132,8 +128,9 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     private fun requestReadWriteExternalStoragePermission() {
 
         if (hasReadWriteStoragePermission()) {
-               val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-               startActivityForResultGallery.launch(galleryIntent)
+            val galleryIntent =
+                Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            startActivityForResultGallery.launch(galleryIntent)
 
         } else {
             EasyPermissions.requestPermissions(
@@ -156,20 +153,33 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
     }
-    /* ActivityResult  for   private fun requestReadWriteExternalStoragePermission() et  private fun requestCameraPermission() */
-    private val startActivityForResultGallery = registerForActivityResult(ActivityResultContracts.StartActivityForResult(),
-        ActivityResultCallback <ActivityResult>{
-            if (it.resultCode == RESULT_OK) //Si
-            {
-                if (it.data != null) // Si il y a une image
-                {
-                    val contentURI = it.data!!.data
-                    val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver,contentURI)
-                    binding?.ivImage?.setImageBitmap(selectedImageBitmap)
-                }
-            }
-        })
 
+    /* ActivityResult  for   private fun requestReadWriteExternalStoragePermission() et  private fun requestCameraPermission() */
+    private val startActivityForResultGallery =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult(),
+            ActivityResultCallback<ActivityResult> {
+                if (it.resultCode == RESULT_OK) //Si
+                {
+                    if (it.data != null) // Si il y a une image
+                    {
+                        val contentURI = it.data!!.data
+                        try {
+                            val selectedImageBitmap =
+                                MediaStore.Images.Media.getBitmap(this.contentResolver, contentURI)
+                            binding?.ivImage?.setImageBitmap(selectedImageBitmap)
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                            Toast.makeText(
+                                this@AddFavouritePlaces,
+                                "Erreur de chargement de l'image depuis la gallerie",
+                                Toast.LENGTH_LONG
+                            )
+                        }
+
+
+                    }
+                }
+            })
 
 
 /* ---------------------- Request read and write storage permissions - END --------------------------------------- */
@@ -181,6 +191,8 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     private fun requestCameraPermission() {
 
         if (hasCameraPermission()) {
+            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            startActivityForResultCamera.launch(cameraIntent)
             //TODO ouvrir l'appareil photo
 
         } else {
@@ -201,6 +213,33 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
     }
+
+    /* ActivityResult  for   private fun requestReadWriteExternalStoragePermission() et  private fun requestCameraPermission() */
+    private val startActivityForResultCamera =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult(),
+            ActivityResultCallback<ActivityResult> {
+                if (it.resultCode == RESULT_OK) //Si
+                {
+                    if (it.data != null) // Si il y a une image
+                    {
+                        try {
+
+                            val imageBitmap = it?.data?.extras?.get("data") as Bitmap
+                            //  val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver,contentURI)
+                            binding?.ivImage?.setImageBitmap(imageBitmap)
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                            Toast.makeText(
+                                this@AddFavouritePlaces,
+                                "Erreur de chargement de la photo depuis la camera",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+            })
+
+
     /* - Request camera permissions - END */
 
     override fun onPermissionsDenied(requestCode: Int, perms: List<String>) {
