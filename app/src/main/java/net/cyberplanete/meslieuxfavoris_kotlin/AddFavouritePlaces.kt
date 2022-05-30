@@ -3,6 +3,8 @@ package net.cyberplanete.meslieuxfavoris_kotlin
 import android.Manifest
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -11,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
@@ -18,7 +21,10 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import com.vmadalin.easypermissions.EasyPermissions
 import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityAddFavouritePlacesBinding
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,9 +34,8 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     companion object {
         const val GALLERY_REQUEST_CODE = 1
         const val CAMERA_REQUEST_CODE = 2
-        //  const val GALLERY = 3
+        const val IMAGES_OF_FAVORITES_PLACES = "MesLieuxFavorisImages"
     }
-
 
     /* Centralisation logique onClickListenner*/
     override fun onClick(elementOfView: View?) {
@@ -84,7 +89,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
         }
         /* END --- Pour la bar d'action */
 
-        /* DatePicker */
+        /* ---- DatePicker - Choix de la date depuis un calendrier */
         dateListener = DatePickerDialog.OnDateSetListener { datePicker, year, month, dayOfMonth ->
 
             calendar.set(
@@ -120,7 +125,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     /* ---------------------- DatePicker END ------------------------*/
 
 
-    /* - Request read and write storage permissions -
+    /* ---------------------- Request read and write storage permissions pour choisir une image -
    Check permissions pour l'accès aux dossiers et fichiers
        si nok , alors demande des droits d'accès
        sinon ouverture du gestionnaire de fichiers pour selectionner une image */
@@ -164,8 +169,11 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
                     {
                         val contentURI = it.data!!.data
                         try {
+
                             val selectedImageBitmap =
                                 MediaStore.Images.Media.getBitmap(this.contentResolver, contentURI)
+                            val savedImage = saveImageToInternalStorage(selectedImageBitmap)
+                            Log.e("Save image:" , "Path :: $savedImage" ) // Un log afin de s'assurer de la bonne sauvegarde du fichier
                             binding?.ivImage?.setImageBitmap(selectedImageBitmap)
                         } catch (e: IOException) {
                             e.printStackTrace()
@@ -185,9 +193,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
 /* ---------------------- Request read and write storage permissions - END --------------------------------------- */
 
 
-    /* - Request camera permissions -
-   Check permissions pour l'accès à la camera -
-       si nok , alors demande des droits d'accès */
+    /* ------------------------- Request camera permissions -   Check permissions pour l'accès à la camera -  si nok , alors demande des droits d'accès */
     private fun requestCameraPermission() {
 
         if (hasCameraPermission()) {
@@ -225,8 +231,11 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
                         try {
 
                             val imageBitmap = it?.data?.extras?.get("data") as Bitmap
+                            val savedImage = saveImageToInternalStorage(imageBitmap) // Sauvegarde de l'image
+                            Log.e("Save image:" , "Path :: $savedImage" ) // Un log afin de s'assurer de la bonne sauvegarde du fichier
+
                             //  val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver,contentURI)
-                            binding?.ivImage?.setImageBitmap(imageBitmap)
+                            binding?.ivImage?.setImageBitmap(imageBitmap) // Affichage de l'image
                         } catch (e: IOException) {
                             e.printStackTrace()
                             Toast.makeText(
@@ -240,7 +249,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
             })
 
 
-    /* - Request camera permissions - END */
+    /* -------------- Request camera permissions - END -----------------------*/
 
     override fun onPermissionsDenied(requestCode: Int, perms: List<String>) {
         if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
@@ -291,4 +300,28 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
             this
         )//Handle the result of a permission request
     }
+
+    /*-------------------- Methode permettant la sauvegarde de l'image ----------------------------------- */
+    private fun saveImageToInternalStorage(bitmap: Bitmap): Uri {
+        var contexttWrapper =
+            ContextWrapper(applicationContext) //Proxying implementation of Context that simply delegates all of its calls to another Context
+        var directory = contexttWrapper.getDir(
+            IMAGES_OF_FAVORITES_PLACES,
+            Context.MODE_PRIVATE
+        ) //Creation du dossier non accessible depuis d'autres applications
+        var file =
+            File(directory, "${UUID.randomUUID()}.jpg") /// Unique User ID - Creation du fichier
+
+        try {
+            val bitmapFile: OutputStream = FileOutputStream(file) // Preparation pour la compression
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, bitmapFile)
+            bitmapFile.flush() // Quand la compression est terminée
+            bitmapFile.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        return Uri.parse(file.absolutePath) // Utiliser pour Un log terminal afin de s'assurer de la bonne sauvegarde du fichier
+    }
+
+
 }
