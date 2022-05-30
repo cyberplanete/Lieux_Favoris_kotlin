@@ -14,13 +14,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MesLieuxFavorisKotlin">
         <activity
-            android:name=".AddFavouritePlaces"
+            android:name=".activities.AddFavouritePlaces"
             android:exported="false"
             android:label="Ajouter un lieu favoris"
             android:screenOrientation="portrait"
             android:theme="@style/CustomNoActionBarTheme"/>
         <activity
-            android:name=".MainActivity"
+            android:name=".activities.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

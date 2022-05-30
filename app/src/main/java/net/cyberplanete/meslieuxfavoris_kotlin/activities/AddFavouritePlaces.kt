@@ -1,4 +1,4 @@
-package net.cyberplanete.meslieuxfavoris_kotlin
+package net.cyberplanete.meslieuxfavoris_kotlin.activities
 
 import android.Manifest
 import android.app.AlertDialog
@@ -20,6 +20,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import com.vmadalin.easypermissions.EasyPermissions
+import net.cyberplanete.meslieuxfavoris_kotlin.R
 import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityAddFavouritePlacesBinding
 import java.io.File
 import java.io.FileOutputStream
