@@ -19,7 +19,7 @@ interface MesLieuxFavorisDAO {
     @Query("select * from 'meslieuxfavoristable'")
     fun fetchAllMesLieuxFavoris(): Flow<List<MesLieuxFavorisEntity>>
 
-    @Query("select * from 'meslieuxfavoristable' where date=: date")
+    @Query("select * from 'meslieuxfavoristable' where date=:date")
     fun fetchMesLieuxFavorisByDate(date:String): Flow<MesLieuxFavorisEntity>
 
 
