@@ -21,11 +21,14 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import com.vmadalin.easypermissions.EasyPermissions
 import net.cyberplanete.meslieuxfavoris_kotlin.R
+import net.cyberplanete.meslieuxfavoris_kotlin.database.MesLieuxFavorisDAO
 import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityAddFavouritePlacesBinding
+import net.cyberplanete.meslieuxfavoris_kotlin.models.MesLieuxFavorisEntity
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
+import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,48 +41,18 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
         const val IMAGES_OF_FAVORITES_PLACES = "MesLieuxFavorisImages"
     }
 
-    /* Centralisation logique onClickListenner*/
-    override fun onClick(elementOfView: View?) {
-        when (elementOfView!!.id) //
-        {
-            R.id.et_date -> {
-                DatePickerDialog(
-                    this@AddFavouritePlaces,
-                    dateListener,
-                    calendar.get(Calendar.YEAR),
-                    calendar.get(Calendar.MONTH),
-                    calendar.get(Calendar.DAY_OF_MONTH)
-                ).show()
-            }
-            R.id.tv_add_photo -> {
-                val imageDialog = AlertDialog.Builder(this)
-                imageDialog.setTitle("Selectionner une action")
-                val imageDialogItems =
-                    arrayOf("Selectionner une photo depuis la gallerie", "Prendre une photo")
-                imageDialog.setItems(imageDialogItems) { dialog, whichOne ->
-                    when (whichOne) {
-                        0 -> requestReadWriteExternalStoragePermission()
-                        1 -> requestCameraPermission()
-                    }
-
-
-                }.show()
-            }
-        }
-    }
-    /* Centralisation logique onClickListenner  - END */
-
-
-    /* ---------------------- DatePicker ------------------------*/
+    private var latitude : Double? = 0.0
+    private var longitude: Double? = 0.0
+    private var saveURIImageToInternalStorage : Uri? = null // Utiliser lors de la sauvegarde du
     private var calendar = Calendar.getInstance() // Instance de Calendar java
     private lateinit var dateListener: DatePickerDialog.OnDateSetListener // Pour l'UI
-
-
     private var binding: ActivityAddFavouritePlacesBinding? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         binding = ActivityAddFavouritePlacesBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
         setContentView(binding?.root)
+
 
         /* Pour la bar d'action */
         setSupportActionBar(binding?.toolbarAddPlace)
@@ -90,7 +63,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
         }
         /* END --- Pour la bar d'action */
 
-        /* ---- DatePicker - Choix de la date depuis un calendrier */
+        /* ------------------------ DatePicker - Choix de la date depuis un calendrier ---------------------------- */
         dateListener = DatePickerDialog.OnDateSetListener { datePicker, year, month, dayOfMonth ->
 
             calendar.set(
@@ -108,13 +81,62 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
 
             updateDateInView()
         }
-        binding?.etDate?.setOnClickListener(this)
-        /* DatePicker - END */
+        /* --------------------------DatePicker - END ----------------------------*/
 
-        /* Add Image */
-        binding?.tvAddPhoto?.setOnClickListener(this)
+        binding?.etDate?.setOnClickListener(this)//
+
+
+        binding?.tvAddPhoto?.setOnClickListener(this) // Ajouter une image
+
+
+        binding?.btnSauvegarder?.setOnClickListener(this) // Sauvegarder le lieu favoris
+
 
     }
+
+    /* Centralisation logique onClickListenner*/
+    override fun onClick(elementOfView: View?) {
+        when (elementOfView!!.id) //
+        {
+            R.id.et_date -> {
+                DatePickerDialog(
+                    this@AddFavouritePlaces,
+                    dateListener,
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                ).show()
+            }
+            R.id.tv_add_photo -> {
+                val imageDialog = AlertDialog.Builder(this)  // Contruction d'une alertDialog
+                imageDialog.setTitle("Selectionner une action")
+                val imageDialogItems =
+                    arrayOf("Selectionner une photo depuis la gallerie", "Prendre une photo")
+                imageDialog.setItems(imageDialogItems) { dialog, whichOne ->
+                    when (whichOne) {
+                        0 -> requestReadWriteExternalStoragePermission()
+                        1 -> requestCameraPermission()
+                    }
+                }.show()
+            }
+            R.id.btn_sauvegarder -> {
+                val title = binding?.etTitle?.text.toString()
+                val description = binding?.etDescription?.text.toString()
+                val date = binding?.etDate?.text?.toString()
+                val localisation = binding?.etLocation?.text.toString()
+
+                if (title != null && description != null && date != null && localisation != null) {
+
+                    //MesLieuxFavorisDAO.insert(MesLieuxFavorisEntity(title= title, description = description, date = date, localisation = localisation, image =  ))
+                } else {
+                    Toast.makeText(this, "Tous les champs doivent completés", Toast.LENGTH_LONG)
+                        .show()
+                }
+
+            }
+        }
+    }
+    /* Centralisation logique onClickListenner  - END */
 
     /* Methode pour afficher la date dans l'inputtext après l'avoir séléctionner dans le datePicker */
     private fun updateDateInView() {
@@ -173,8 +195,11 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
 
                             val selectedImageBitmap =
                                 MediaStore.Images.Media.getBitmap(this.contentResolver, contentURI)
-                            val savedImage = saveImageToInternalStorage(selectedImageBitmap)
-                            Log.e("Save image:" , "Path :: $savedImage" ) // Un log afin de s'assurer de la bonne sauvegarde du fichier
+                             saveURIImageToInternalStorage = saveImageToInternalStorage(selectedImageBitmap)
+                            Log.e(
+                                "Save image:",
+                                "Path :: ${saveURIImageToInternalStorage}"
+                            ) // Un log afin de s'assurer de la bonne sauvegarde du fichier
                             binding?.ivImage?.setImageBitmap(selectedImageBitmap)
                         } catch (e: IOException) {
                             e.printStackTrace()
@@ -232,8 +257,12 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
                         try {
 
                             val imageBitmap = it?.data?.extras?.get("data") as Bitmap
-                            val savedImage = saveImageToInternalStorage(imageBitmap) // Sauvegarde de l'image
-                            Log.e("Save image:" , "Path :: $savedImage" ) // Un log afin de s'assurer de la bonne sauvegarde du fichier
+                             saveURIImageToInternalStorage =
+                                saveImageToInternalStorage(imageBitmap) // Sauvegarde de l'image
+                            Log.e(
+                                "Save image:",
+                                "Path :: ${saveURIImageToInternalStorage}"
+                            ) // Un log afin de s'assurer de la bonne sauvegarde du fichier
 
                             //  val selectedImageBitmap = MediaStore.Images.Media.getBitmap(this.contentResolver,contentURI)
                             binding?.ivImage?.setImageBitmap(imageBitmap) // Affichage de l'image
@@ -303,7 +332,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     }
 
     /*-------------------- Methode permettant la sauvegarde de l'image ----------------------------------- */
-    private fun saveImageToInternalStorage(bitmap: Bitmap): Uri {
+    private fun saveImageToInternalStorage(bitmap: Bitmap): Uri? {
         var contexttWrapper =
             ContextWrapper(applicationContext) //Proxying implementation of Context that simply delegates all of its calls to another Context
         var directory = contexttWrapper.getDir(
@@ -321,6 +350,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
         } catch (e: IOException) {
             e.printStackTrace()
         }
+
         return Uri.parse(file.absolutePath) // Utiliser pour Un log terminal afin de s'assurer de la bonne sauvegarde du fichier
     }
 
