@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:theme="@style/Theme.MaterialComponents"
-    tools:context=".activities.AddFavouritePlaces">
+    tools:context=".activities.MesLieuxFavorisAjoutActivity">
 
 
     <LinearLayout
@@ -101,7 +101,7 @@
             app:layout_constraintTop_toBottomOf="@id/til_date">
 
             <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/et_location"
+                android:id="@+id/et_localisation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Localisation"

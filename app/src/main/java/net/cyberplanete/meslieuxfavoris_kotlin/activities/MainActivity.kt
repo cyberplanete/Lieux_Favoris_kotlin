@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding?.root)
 
         binding?.fabAddFavoritePlace?.setOnClickListener {
-            val intent = Intent(this, AddFavouritePlaces::class.java)
+            val intent = Intent(this, MesLieuxFavorisAjoutActivity::class.java)
             startActivity(intent)
         }
 
