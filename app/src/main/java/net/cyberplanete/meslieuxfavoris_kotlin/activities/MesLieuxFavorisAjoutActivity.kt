@@ -19,8 +19,13 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
 import com.vmadalin.easypermissions.EasyPermissions
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import net.cyberplanete.meslieuxfavoris_kotlin.R
+import net.cyberplanete.meslieuxfavoris_kotlin.database.MesLIeuxFavorisDatabase
+import net.cyberplanete.meslieuxfavoris_kotlin.database.MesLieuxFavorisApp
 import net.cyberplanete.meslieuxfavoris_kotlin.database.MesLieuxFavorisDAO
 import net.cyberplanete.meslieuxfavoris_kotlin.databinding.ActivityAddFavouritePlacesBinding
 import net.cyberplanete.meslieuxfavoris_kotlin.models.MesLieuxFavorisEntity
@@ -28,22 +33,21 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
-import java.net.URI
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
-class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
+class MesLieuxFavorisAjoutActivity : AppCompatActivity(), View.OnClickListener,
     EasyPermissions.PermissionCallbacks {
 
     companion object {
         const val GALLERY_REQUEST_CODE = 1
         const val CAMERA_REQUEST_CODE = 2
-        const val IMAGES_OF_FAVORITES_PLACES = "MesLieuxFavorisImages"
+        const val FOLDER_IMAGES_OF_FAVORITES_PLACES = "MesLieuxFavorisImages"
     }
-
-    private var latitude : Double? = 0.0
-    private var longitude: Double? = 0.0
-    private var saveURIImageToInternalStorage : Uri? = null // Utiliser lors de la sauvegarde du
+    private var latitude: Double = 0.0
+    private var longitude: Double = 0.0
+    private var saveURIImageToInternalStorage: Uri? = null // Utiliser lors de la sauvegarde du
     private var calendar = Calendar.getInstance() // Instance de Calendar java
     private lateinit var dateListener: DatePickerDialog.OnDateSetListener // Pour l'UI
     private var binding: ActivityAddFavouritePlacesBinding? = null
@@ -53,6 +57,10 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
         super.onCreate(savedInstanceState)
         setContentView(binding?.root)
 
+        /* DATABASE */
+        val mesLieuxFavorisDAO =(application as MesLieuxFavorisApp).mesLIeuxFavorisDatabase.mesLieuxFavorisDAO() // Database
+        lifecycleScope.launch { mesLieuxFavorisDAO.fetchAllMesLieuxFavoris().collect { val lieuxFavorisList = ArrayList(it) } }
+        /* DATABASE */
 
         /* Pour la bar d'action */
         setSupportActionBar(binding?.toolbarAddPlace)
@@ -82,14 +90,14 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
             updateDateInView()
         }
         /* --------------------------DatePicker - END ----------------------------*/
-
+        updateDateInView() // Mise à jour du champ date automatiquement
         binding?.etDate?.setOnClickListener(this)//
 
 
         binding?.tvAddPhoto?.setOnClickListener(this) // Ajouter une image
 
 
-        binding?.btnSauvegarder?.setOnClickListener(this) // Sauvegarder le lieu favoris
+        binding?.btnSauvegarder?.setOnClickListener(this)  // Sauvegarder le lieu favoris
 
 
     }
@@ -100,7 +108,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
         {
             R.id.et_date -> {
                 DatePickerDialog(
-                    this@AddFavouritePlaces,
+                    this@MesLieuxFavorisAjoutActivity,
                     dateListener,
                     calendar.get(Calendar.YEAR),
                     calendar.get(Calendar.MONTH),
@@ -120,22 +128,41 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
                 }.show()
             }
             R.id.btn_sauvegarder -> {
-                val title = binding?.etTitle?.text.toString()
-                val description = binding?.etDescription?.text.toString()
-                val date = binding?.etDate?.text?.toString()
-                val localisation = binding?.etLocation?.text.toString()
 
-                if (title != null && description != null && date != null && localisation != null) {
+                when {
+                    binding?.etTitle?.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "Please enter  tilte", Toast.LENGTH_LONG).show()
+                    }
+                    binding?.etDescription?.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "Please enter a description", Toast.LENGTH_LONG).show()
+                    }
+                    saveURIImageToInternalStorage == null -> {
+                        Toast.makeText(this, "Please select an image", Toast.LENGTH_LONG).show()
+                    }
+                    binding?.etLocalisation?.text.isNullOrEmpty() -> {
+                        Toast.makeText(this, "Please enter  tilte", Toast.LENGTH_LONG).show()
+                    }
+                    else -> {
+                        val unLieuxFavorisEntity = MesLieuxFavorisEntity(
+                            id = 0,
+                            binding?.etTitle?.text.toString(),
+                            saveURIImageToInternalStorage.toString(),
+                            binding?.etDescription?.text.toString(),
+                            binding?.etDate?.text.toString(),
+                            binding?.etLocalisation?.text.toString(), latitude , longitude
 
-                    //MesLieuxFavorisDAO.insert(MesLieuxFavorisEntity(title= title, description = description, date = date, localisation = localisation, image =  ))
-                } else {
-                    Toast.makeText(this, "Tous les champs doivent completés", Toast.LENGTH_LONG)
-                        .show()
+                        )
+                        var db = MesLIeuxFavorisDatabase.getInstance(this)
+                        lifecycleScope.launch { db.mesLieuxFavorisDAO().insert(unLieuxFavorisEntity) }
+                        Toast.makeText(this, "Lieu inséré correctement dans la base de données", Toast.LENGTH_LONG).show()
+                    }
                 }
 
             }
         }
     }
+
+
     /* Centralisation logique onClickListenner  - END */
 
     /* Methode pour afficher la date dans l'inputtext après l'avoir séléctionner dans le datePicker */
@@ -195,7 +222,8 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
 
                             val selectedImageBitmap =
                                 MediaStore.Images.Media.getBitmap(this.contentResolver, contentURI)
-                             saveURIImageToInternalStorage = saveImageToInternalStorage(selectedImageBitmap)
+                            saveURIImageToInternalStorage =
+                                saveImageToInternalStorage(selectedImageBitmap)
                             Log.e(
                                 "Save image:",
                                 "Path :: ${saveURIImageToInternalStorage}"
@@ -204,7 +232,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
                         } catch (e: IOException) {
                             e.printStackTrace()
                             Toast.makeText(
-                                this@AddFavouritePlaces,
+                                this@MesLieuxFavorisAjoutActivity,
                                 "Erreur de chargement de l'image depuis la gallerie",
                                 Toast.LENGTH_LONG
                             )
@@ -257,7 +285,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
                         try {
 
                             val imageBitmap = it?.data?.extras?.get("data") as Bitmap
-                             saveURIImageToInternalStorage =
+                            saveURIImageToInternalStorage =
                                 saveImageToInternalStorage(imageBitmap) // Sauvegarde de l'image
                             Log.e(
                                 "Save image:",
@@ -269,7 +297,7 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
                         } catch (e: IOException) {
                             e.printStackTrace()
                             Toast.makeText(
-                                this@AddFavouritePlaces,
+                                this@MesLieuxFavorisAjoutActivity,
                                 "Erreur de chargement de la photo depuis la camera",
                                 Toast.LENGTH_LONG
                             ).show()
@@ -335,10 +363,11 @@ class AddFavouritePlaces : AppCompatActivity(), View.OnClickListener,
     private fun saveImageToInternalStorage(bitmap: Bitmap): Uri? {
         var contexttWrapper =
             ContextWrapper(applicationContext) //Proxying implementation of Context that simply delegates all of its calls to another Context
-        var directory = contexttWrapper.getDir(
-            IMAGES_OF_FAVORITES_PLACES,
-            Context.MODE_PRIVATE
-        ) //Creation du dossier non accessible depuis d'autres applications
+        var directory =
+            contexttWrapper.getDir(//Creation du dossier contenant les images de lieu favoris
+                FOLDER_IMAGES_OF_FAVORITES_PLACES,
+                Context.MODE_PRIVATE//non accessible depuis d'autres applications
+            )
         var file =
             File(directory, "${UUID.randomUUID()}.jpg") /// Unique User ID - Creation du fichier
 
