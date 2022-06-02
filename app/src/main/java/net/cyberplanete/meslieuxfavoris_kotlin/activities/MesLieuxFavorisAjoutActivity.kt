@@ -130,16 +130,16 @@ class MesLieuxFavorisAjoutActivity : AppCompatActivity(), View.OnClickListener,
             R.id.btn_sauvegarder -> {
 
                 when {
-                    binding?.etTitle?.text.isNullOrEmpty() -> {
+                    binding?.etTitle?.text.isNullOrEmpty() -> { // Verififer que ce champ n'est pas vide
                         Toast.makeText(this, "Please enter  tilte", Toast.LENGTH_LONG).show()
                     }
-                    binding?.etDescription?.text.isNullOrEmpty() -> {
+                    binding?.etDescription?.text.isNullOrEmpty() -> {// Verififer que ce champ n'est pas vide
                         Toast.makeText(this, "Please enter a description", Toast.LENGTH_LONG).show()
                     }
-                    saveURIImageToInternalStorage == null -> {
+                    saveURIImageToInternalStorage == null -> {// Verififer que ce champ n'est pas vide
                         Toast.makeText(this, "Please select an image", Toast.LENGTH_LONG).show()
                     }
-                    binding?.etLocalisation?.text.isNullOrEmpty() -> {
+                    binding?.etLocalisation?.text.isNullOrEmpty() -> {// Verififer que ce champ n'est pas vide
                         Toast.makeText(this, "Please enter  tilte", Toast.LENGTH_LONG).show()
                     }
                     else -> {
