@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">Mes lieux Favoris - Kotlin</string>
     <string name="text_add_image">Ajouter une photo</string>
+    <string name="note_texte_aucun_lieux_favoris_trouvé">Pas de lieu favoris pour le moment dans la base de données </string>
 </resources>

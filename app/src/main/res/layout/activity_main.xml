@@ -6,6 +6,24 @@
     android:layout_height="match_parent"
     tools:context=".activities.MainActivity">
 
+        <view class="androidx.recyclerview.widget.RecyclerView"
+            android:id="@+id/rv_mes_lieux_favoris"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            tools:visibility="gone">
+
+        </view>
+
+        <TextView
+            android:id="@+id/tv_aucune_données"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="@string/note_texte_aucun_lieux_favoris_trouvé"
+            android:textSize="@dimen/aucune_données_text_size"
+            android:visibility="visible"
+            tools:visibility="visible"/>
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddFavoritePlace"
