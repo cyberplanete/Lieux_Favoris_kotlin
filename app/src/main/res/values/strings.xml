@@ -2,4 +2,11 @@
     <string name="app_name">Mes lieux Favoris - Kotlin</string>
     <string name="text_add_image">Ajouter une photo</string>
     <string name="note_texte_aucun_lieux_favoris_trouvé">Pas de lieu favoris pour le moment dans la base de données </string>
+
+    <string name="edit_text_hint_title">Title</string>
+    <string name="edit_text_hint_description">Description</string>
+    <string name="edit_text_hint_date">Date</string>
+    <string name="edit_text_hint_location">Location</string>
+    <string name="btn_text_save">Sauvegarde image</string>
+    <string name="image_content_description">image</string>
 </resources>
